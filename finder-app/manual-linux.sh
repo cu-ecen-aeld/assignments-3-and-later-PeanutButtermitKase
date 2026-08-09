@@ -127,17 +127,29 @@ ${CROSS_COMPILE}readelf -a busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a busybox | grep "Shared library"
 
 echo "Adding ARM64 library dependencies to rootfs"
-cp -L /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 \
-    ${OUTDIR}/rootfs/lib/
 
-cp -L /usr/aarch64-linux-gnu/lib/libc.so.6 \
-    ${OUTDIR}/rootfs/lib/
+LIBC_PATH=$(${CROSS_COMPILE}gcc -print-file-name=libc.so.6)
+LIBM_PATH=$(${CROSS_COMPILE}gcc -print-file-name=libm.so.6)
+LIBRESOLV_PATH=$(${CROSS_COMPILE}gcc -print-file-name=libresolv.so.2)
+LOADER_PATH=$(${CROSS_COMPILE}gcc -print-file-name=ld-linux-aarch64.so.1)
 
-cp -L /usr/aarch64-linux-gnu/lib/libm.so.6 \
-    ${OUTDIR}/rootfs/lib/
+echo "libc:      ${LIBC_PATH}"
+echo "libm:      ${LIBM_PATH}"
+echo "libresolv: ${LIBRESOLV_PATH}"
+echo "loader:    ${LOADER_PATH}"
 
-cp -L /usr/aarch64-linux-gnu/lib/libresolv.so.2 \
-    ${OUTDIR}/rootfs/lib/
+for lib in "${LOADER_PATH}" "${LIBC_PATH}" "${LIBM_PATH}" "${LIBRESOLV_PATH}"
+do
+    if [ ! -f "${lib}" ]; then
+        echo "ERROR: Required ARM64 library not found: ${lib}"
+        exit 1
+    fi
+done
+
+cp -L "${LOADER_PATH}" "${OUTDIR}/rootfs/lib/"
+cp -L "${LIBC_PATH}" "${OUTDIR}/rootfs/lib/"
+cp -L "${LIBM_PATH}" "${OUTDIR}/rootfs/lib/"
+cp -L "${LIBRESOLV_PATH}" "${OUTDIR}/rootfs/lib/"
 
 
 

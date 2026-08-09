@@ -138,20 +138,22 @@ echo "libm:      ${LIBM_PATH}"
 echo "libresolv: ${LIBRESOLV_PATH}"
 echo "loader:    ${LOADER_PATH}"
 
-for lib in "${LOADER_PATH}" "${LIBC_PATH}" "${LIBM_PATH}" "${LIBRESOLV_PATH}"
-do
-    if [ ! -f "${lib}" ]; then
-        echo "ERROR: Required ARM64 library not found: ${lib}"
-        exit 1
-    fi
-done
+mkdir -p "${OUTDIR}/rootfs/lib"
+mkdir -p "${OUTDIR}/rootfs/lib64"
 
-cp -L "${LOADER_PATH}" "${OUTDIR}/rootfs/lib/"
-cp -L "${LIBC_PATH}" "${OUTDIR}/rootfs/lib/"
-cp -L "${LIBM_PATH}" "${OUTDIR}/rootfs/lib/"
-cp -L "${LIBRESOLV_PATH}" "${OUTDIR}/rootfs/lib/"
+cp -L "${LIBC_PATH}"      "${OUTDIR}/rootfs/lib/libc.so.6"
+cp -L "${LIBM_PATH}"      "${OUTDIR}/rootfs/lib/libm.so.6"
+cp -L "${LIBRESOLV_PATH}" "${OUTDIR}/rootfs/lib/libresolv.so.2"
+cp -L "${LOADER_PATH}"    "${OUTDIR}/rootfs/lib/ld-linux-aarch64.so.1"
 
+cp -L "${LIBC_PATH}"      "${OUTDIR}/rootfs/lib64/libc.so.6"
+cp -L "${LIBM_PATH}"      "${OUTDIR}/rootfs/lib64/libm.so.6"
+cp -L "${LIBRESOLV_PATH}" "${OUTDIR}/rootfs/lib64/libresolv.so.2"
+cp -L "${LOADER_PATH}"    "${OUTDIR}/rootfs/lib64/ld-linux-aarch64.so.1"
 
+echo "ARM64 libraries installed in rootfs:"
+ls -l "${OUTDIR}/rootfs/lib"
+ls -l "${OUTDIR}/rootfs/lib64"
 
 echo "Create device nodes"
 sudo mknod -m 666 ${OUTDIR}/rootfs/dev/null c 1 3

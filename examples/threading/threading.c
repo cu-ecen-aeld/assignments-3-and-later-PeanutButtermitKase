@@ -13,24 +13,41 @@ void* threadfunc(void* thread_param)
 
     struct thread_data* thread_func_args =
         (struct thread_data *)thread_param;
+
     thread_func_args->thread_complete_success = false;
+
     if (usleep(thread_func_args->wait_to_obtain_ms * 1000) != 0) {
-        ERROR_LOG("usleep before mutex lock failed");
+        ERROR_LOG("Failed while waiting %d ms before locking mutex",
+                thread_func_args->wait_to_obtain_ms);
         return thread_param;
     }
-    if (pthread_mutex_lock(thread_func_args->mutex) != 0) {
-        ERROR_LOG("pthread_mutex_lock failed");
+
+    int lock_rc = pthread_mutex_lock(thread_func_args->mutex);
+    if (lock_rc != 0) {
+        ERROR_LOG("pthread_mutex_lock failed with error code %d", lock_rc);
         return thread_param;
     }
+
     if (usleep(thread_func_args->wait_to_release_ms * 1000) != 0) {
-        ERROR_LOG("usleep before mutex unlock failed");
-        pthread_mutex_unlock(thread_func_args->mutex);
+        ERROR_LOG("Failed while waiting %d ms before releasing mutex",
+                thread_func_args->wait_to_release_ms);
+
+        int unlock_rc = pthread_mutex_unlock(thread_func_args->mutex);
+        if (unlock_rc != 0) {
+            ERROR_LOG("pthread_mutex_unlock also failed during error recovery "
+                    "with error code %d",
+                    unlock_rc);
+        }
+
         return thread_param;
     }
-    if (pthread_mutex_unlock(thread_func_args->mutex) != 0) {
-        ERROR_LOG("pthread_mutex_unlock failed");
+
+    int unlock_rc = pthread_mutex_unlock(thread_func_args->mutex);
+    if (unlock_rc != 0) {
+        ERROR_LOG("pthread_mutex_unlock failed with error code %d", unlock_rc);
         return thread_param;
     }
+
     thread_func_args->thread_complete_success = true;
     return thread_param;
 }
